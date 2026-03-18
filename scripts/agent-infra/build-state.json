@@ -1,0 +1,22 @@
+{
+  "dearnote": {
+    "ios": {
+      "version": "1.0.0",
+      "build": 10
+    },
+    "android": {
+      "version": "1.0.0",
+      "build": 2
+    }
+  },
+  "noyoupick": {
+    "ios": {
+      "version": "1.0.0",
+      "build": 1
+    },
+    "android": {
+      "version": "1.0.0",
+      "build": 1
+    }
+  }
+}

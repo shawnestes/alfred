@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alfred - Costs</title>
+    <link rel="stylesheet" href="nav.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f23; color: #ccc; }
+        .container { padding: 2rem; max-width: 1200px; margin: 0 auto; }
+        .period-selector { margin-bottom: 2rem; }
+        .period-selector select { 
+            background: #1a1a2e; color: #ccc; border: 1px solid #333; 
+            padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.9rem; 
+        }
+        .summary-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .card { background: #1a1a2e; border-radius: 12px; padding: 1.5rem; border: 1px solid #333; }
+        .card h3 { color: #00ff88; font-size: 0.85rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .card .value { color: #fff; font-size: 1.8rem; font-weight: 700; }
+        .charts-section { margin-bottom: 2rem; }
+        .chart { background: #1a1a2e; border-radius: 12px; padding: 1.5rem; border: 1px solid #333; margin-bottom: 1rem; }
+        .chart h3 { color: #fff; margin-bottom: 1rem; }
+        .bar-chart { display: flex; flex-direction: column; gap: 0.8rem; }
+        .bar-row { display: flex; align-items: center; gap: 1rem; }
+        .bar-label { width: 80px; font-size: 0.85rem; color: #ccc; }
+        .bar-track { flex: 1; height: 24px; background: #16213e; border-radius: 12px; position: relative; overflow: hidden; }
+        .bar-fill { height: 100%; border-radius: 12px; position: relative; transition: width 0.3s; }
+        .bar-fill.nexus { background: linear-gradient(90deg, #00ff88, #00cc6a); }
+        .bar-fill.dearnote { background: linear-gradient(90deg, #6c5ce7, #5a4fcf); }
+        .bar-fill.ghostreel { background: linear-gradient(90deg, #e17055, #d63031); }
+        .bar-fill.quickdraw { background: linear-gradient(90deg, #fdcb6e, #e17055); }
+        .bar-fill.noyoupick { background: linear-gradient(90deg, #00b894, #00a085); }
+        .bar-value { position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%); color: #fff; font-size: 0.75rem; font-weight: 600; }
+        .table-section { background: #1a1a2e; border-radius: 12px; padding: 1.5rem; border: 1px solid #333; }
+        .table-section h3 { color: #fff; margin-bottom: 1rem; }
+        .cost-table { width: 100%; border-collapse: collapse; }
+        .cost-table th { text-align: left; color: #00ff88; font-size: 0.85rem; padding: 0.75rem; border-bottom: 1px solid #333; }
+        .cost-table td { padding: 0.75rem; border-bottom: 1px solid #222; }
+        .cost-table tr:hover { background: rgba(0,255,136,0.05); }
+        .agent-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 0.5rem; }
+        .loading { text-align: center; padding: 2rem; color: #666; }
+    </style>
+</head>
+<body>
+    <nav class="nav-bar">
+        <a href="/" class="nav-brand">Alfred</a>
+        <a href="/">Home</a>
+        <a href="/tasks.html">Tasks</a>
+        <a href="/goals.html">Goals</a>
+        <a href="/costs.html" class="active">Costs</a>
+        <a href="/pipeline.html">Pipeline</a>
+        <a href="/calendar.html">Calendar</a>
+        <a href="/memory.html">Memory</a>
+        <a href="/team.html">Team</a>
+        <a href="/office.html">Office</a>
+    </nav>
+    
+    <div class="container">
+        <div class="period-selector">
+            <label for="period">Period: </label>
+            <select id="period" onchange="loadCosts()">
+                <option value="day">Today</option>
+                <option value="week" selected>This Week</option>
+                <option value="month">This Month</option>
+            </select>
+        </div>
+        
+        <div class="summary-cards" id="summary">
+            <div class="card">
+                <h3>Total Spend</h3>
+                <div class="value" id="total-spend">$0.00</div>
+            </div>
+            <div class="card">
+                <h3>Daily Average</h3>
+                <div class="value" id="daily-avg">$0.00</div>
+            </div>
+            <div class="card">
+                <h3>Top Spender</h3>
+                <div class="value" id="top-spender">-</div>
+            </div>
+            <div class="card">
+                <h3>Sessions</h3>
+                <div class="value" id="session-count">0</div>
+            </div>
+        </div>
+        
+        <div class="charts-section">
+            <div class="chart">
+                <h3>Cost by Agent</h3>
+                <div class="bar-chart" id="agent-chart">
+                    <div class="loading">Loading cost data...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-section">
+            <h3>Detailed Breakdown</h3>
+            <table class="cost-table">
+                <thead>
+                    <tr>
+                        <th>Agent</th>
+                        <th>Sessions</th>
+                        <th>Input Tokens</th>
+                        <th>Output Tokens</th>
+                        <th>Cost</th>
+                        <th>% of Total</th>
+                    </tr>
+                </thead>
+                <tbody id="cost-tbody">
+                    <tr><td colspan="6" class="loading">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const agentColors = {
+            'nexus': '#00ff88',
+            'dearnote': '#6c5ce7',
+            'ghostreel': '#e17055',
+            'quickdraw': '#fdcb6e',
+            'noyoupick': '#00b894'
+        };
+
+        async function loadCosts() {
+            const period = document.getElementById('period').value;
+            try {
+                const response = await fetch(`/api/costs?period=${period}`);
+                const data = await response.json();
+                
+                // Update summary cards
+                document.getElementById('total-spend').textContent = '$' + (data.totalCost || 0).toFixed(2);
+                document.getElementById('daily-avg').textContent = '$' + (data.dailyAverage || 0).toFixed(2);
+                document.getElementById('top-spender').textContent = data.topAgent || '-';
+                document.getElementById('session-count').textContent = data.totalSessions || 0;
+                
+                // Update bar chart
+                const chartEl = document.getElementById('agent-chart');
+                const maxCost = Math.max(...Object.values(data.agents || {}));
+                
+                chartEl.innerHTML = Object.entries(data.agents || {}).map(([agent, cost]) => {
+                    const percentage = maxCost > 0 ? (cost / maxCost) * 100 : 0;
+                    return `
+                        <div class="bar-row">
+                            <div class="bar-label">${agent}</div>
+                            <div class="bar-track">
+                                <div class="bar-fill ${agent.toLowerCase()}" style="width: ${percentage}%">
+                                    <div class="bar-value">$${cost.toFixed(2)}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                // Update table
+                const tbody = document.getElementById('cost-tbody');
+                tbody.innerHTML = Object.entries(data.details || {}).map(([agent, info]) => {
+                    const percentage = data.totalCost > 0 ? (info.cost / data.totalCost * 100) : 0;
+                    const color = agentColors[agent.toLowerCase()] || '#666';
+                    return `
+                        <tr>
+                            <td><span class="agent-dot" style="background: ${color}"></span>${agent}</td>
+                            <td>${info.sessions}</td>
+                            <td>${info.inputTokens?.toLocaleString() || 0}</td>
+                            <td>${info.outputTokens?.toLocaleString() || 0}</td>
+                            <td>$${info.cost.toFixed(2)}</td>
+                            <td>${percentage.toFixed(1)}%</td>
+                        </tr>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('Error loading costs:', error);
+                document.getElementById('agent-chart').innerHTML = '<div class="loading">Error loading data</div>';
+                document.getElementById('cost-tbody').innerHTML = '<tr><td colspan="6" class="loading">Error loading data</td></tr>';
+            }
+        }
+        
+        // Load costs on page load
+        loadCosts();
+    </script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+{
+  "mission": "Build products that are helpful for consumers with a focus on profitability. We bootstrap products to keep prices low.",
+  "goals": [
+    {
+      "id": "g1",
+      "title": "Launch Dearnote to App Store",
+      "project": "Dearnote",
+      "priority": 1,
+      "status": "in-progress",
+      "tasks": ["Review PR status", "EAS CI/CD setup", "App Store metadata"]
+    },
+    {
+      "id": "g2", 
+      "title": "Launch Noyoupick to App Store",
+      "project": "Noyoupick",
+      "priority": 2,
+      "status": "in-progress",
+      "tasks": ["Deploy Foursquare edge functions", "TestFlight build", "App Store metadata"]
+    },
+    {
+      "id": "g3",
+      "title": "Grow TheBillFixer/LifeScript revenue",
+      "project": "LifeScript",
+      "priority": 3,
+      "status": "active",
+      "tasks": ["Content pipeline running", "X account growth"]
+    },
+    {
+      "id": "g4",
+      "title": "Quickdraw profitable trading",
+      "project": "Quickdraw",
+      "priority": 4,
+      "status": "active",
+      "tasks": ["Paper trading validation", "Strategy refinement"]
+    },
+    {
+      "id": "g5",
+      "title": "Ghostreel YouTube channel growth",
+      "project": "Ghostreel",
+      "priority": 5,
+      "status": "active",
+      "tasks": ["Automated video pipeline", "Upload scheduling"]
+    }
+  ]
+}

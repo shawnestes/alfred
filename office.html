@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alfred - Office</title>
+    <link rel="stylesheet" href="nav.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f23; color: #ccc; }
+        .office { position: relative; max-width: 900px; margin: 2rem auto; padding: 2rem; }
+        .office h2 { color: #fff; text-align: center; margin-bottom: 2rem; }
+        .floor { background: #12122a; border: 1px solid #333; border-radius: 16px; padding: 3rem 2rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; position: relative; }
+        .floor::before { content: 'SHADOWTEAM HQ'; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #0f0f23; padding: 0 1rem; color: #444; font-size: 0.8rem; letter-spacing: 2px; }
+        .desk { background: #1a1a2e; border-radius: 12px; padding: 1.5rem; text-align: center; position: relative; border: 1px solid #282840; transition: all 0.3s; }
+        .desk.active { border-color: #00ff88; box-shadow: 0 0 20px rgba(0,255,136,0.1); }
+        .desk.away { opacity: 0.5; }
+        .chair { font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .desk-name { color: #fff; font-weight: 600; font-size: 0.95rem; }
+        .desk-role { color: #666; font-size: 0.75rem; margin-top: 0.2rem; }
+        .monitor { width: 50px; height: 35px; background: #0f0f23; border: 2px solid #333; border-radius: 4px; margin: 0.8rem auto 0; position: relative; }
+        .desk.active .monitor { border-color: #00ff88; }
+        .desk.active .monitor::after { content: ''; position: absolute; inset: 3px; background: #00ff88; opacity: 0.3; border-radius: 2px; animation: screenGlow 2s infinite; }
+        .monitor-stand { width: 12px; height: 8px; background: #333; margin: 0 auto; }
+        @keyframes screenGlow { 0%,100% { opacity: 0.2; } 50% { opacity: 0.5; } }
+        @keyframes typing { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+        .desk.active .chair { animation: typing 0.5s infinite; }
+        .status-badge { display: inline-block; margin-top: 0.6rem; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.7rem; font-weight: 600; }
+        .status-badge.online { background: rgba(0,255,136,0.15); color: #00ff88; }
+        .status-badge.offline { background: rgba(255,68,68,0.15); color: #ff4444; }
+        .status-badge.disabled { background: rgba(255,170,0,0.15); color: #ffaa00; }
+        .ceo-office { grid-column: 1 / -1; background: linear-gradient(135deg, #1a1a2e, #1e1e3a); border: 1px solid #ffd70044; }
+        .ceo-office.active { border-color: #ffd700; box-shadow: 0 0 20px rgba(255,215,0,0.1); }
+        .water-cooler { grid-column: 2; text-align: center; color: #444; font-size: 0.8rem; padding: 1rem; }
+        .water-cooler .emoji { font-size: 2rem; }
+    </style>
+</head>
+<body>
+    <nav class="nav-bar">
+        <a href="/" class="nav-brand">Alfred</a>
+        <a href="/">Home</a>
+        <a href="/tasks.html">Tasks</a>
+        <a href="/goals.html">Goals</a>
+        <a href="/costs.html">Costs</a>
+        <a href="/pipeline.html">Pipeline</a>
+        <a href="/calendar.html">Calendar</a>
+        <a href="/memory.html">Memory</a>
+        <a href="/team.html">Team</a>
+        <a href="/office.html" class="active">Office</a>
+    </nav>
+    <div class="office">
+        <h2>🏢 Shadowteam HQ</h2>
+        <div class="floor">
+            <div class="desk ceo-office active" id="desk-shawn">
+                <div class="chair">👨‍💼</div>
+                <div class="desk-name">Shawn's Office</div>
+                <div class="desk-role">CEO</div>
+                <div class="monitor"></div><div class="monitor-stand"></div>
+                <div class="status-badge online">IN OFFICE</div>
+            </div>
+            <div class="desk" id="desk-nexus">
+                <div class="chair">🤖</div>
+                <div class="desk-name">Nexus</div>
+                <div class="desk-role">COO</div>
+                <div class="monitor"></div><div class="monitor-stand"></div>
+                <div class="status-badge" id="badge-nexus">...</div>
+            </div>
+            <div class="desk" id="desk-dearnote">
+                <div class="chair">💌</div>
+                <div class="desk-name">Dearnote</div>
+                <div class="desk-role">Gratitude App</div>
+                <div class="monitor"></div><div class="monitor-stand"></div>
+                <div class="status-badge" id="badge-dearnote">...</div>
+            </div>
+            <div class="desk" id="desk-ghostreel">
+                <div class="chair">🎬</div>
+                <div class="desk-name">Ghostreel</div>
+                <div class="desk-role">Content</div>
+                <div class="monitor"></div><div class="monitor-stand"></div>
+                <div class="status-badge" id="badge-ghostreel">...</div>
+            </div>
+            <div class="water-cooler">
+                <div class="emoji">🚰</div>
+                Water Cooler
+            </div>
+            <div class="desk away" id="desk-quickdraw">
+                <div class="chair">⚡</div>
+                <div class="desk-name">Quickdraw</div>
+                <div class="desk-role">Trading Bot</div>
+                <div class="monitor"></div><div class="monitor-stand"></div>
+                <div class="status-badge" id="status-quickdraw">CHECKING...</div>
+            </div>
+        </div>
+    </div>
+    <script>
+        ['nexus','dearnote','ghostreel','quickdraw'].forEach(name => {
+            fetch('/api/agent/' + name + '/health').then(r=>r.json()).then(d => {
+                const desk = document.getElementById('desk-' + name);
+                const badge = document.getElementById('badge-' + name);
+                if (d.status === 'running') {
+                    desk.classList.add('active');
+                    desk.classList.remove('away');
+                    badge.className = 'status-badge online';
+                    badge.textContent = 'WORKING';
+                } else {
+                    desk.classList.add('away');
+                    desk.classList.remove('active');
+                    badge.className = 'status-badge offline';
+                    badge.textContent = 'AWAY';
+                }
+            }).catch(() => {
+                const badge = document.getElementById('badge-' + name);
+                badge.className = 'status-badge offline';
+                badge.textContent = 'AWAY';
+                document.getElementById('desk-' + name).classList.add('away');
+            });
+        });
+    </script>
+</body>
+</html>

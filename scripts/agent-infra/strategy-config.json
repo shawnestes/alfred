@@ -1,0 +1,44 @@
+{
+  "version": 3,
+  "updated_at": "2026-03-18T00:55:42+00:00",
+  "updated_by": "agent",
+  "strategies": {
+    "mfi": {
+      "enabled": true,
+      "params": {
+        "period": 14,
+        "overbought": 80,
+        "oversold": 20
+      }
+    },
+    "rsi": {
+      "enabled": false,
+      "disabled_reason": "3.6% win rate",
+      "disabled_at": "2026-03-17T20:52:00-04:00"
+    },
+    "volume": {
+      "enabled": true,
+      "params": {}
+    }
+  },
+  "changelog": [
+    {
+      "version": 1,
+      "date": "2026-03-17T20:52:00-04:00",
+      "by": "nexus",
+      "changes": "Initial config from audit"
+    },
+    {
+      "version": 2,
+      "date": "2026-03-18T00:55:34+00:00",
+      "by": "agent",
+      "changes": "Disabled strategy: mfi (Testing disable functionality)"
+    },
+    {
+      "version": 3,
+      "date": "2026-03-18T00:55:42+00:00",
+      "by": "agent",
+      "changes": "Enabled strategy: mfi"
+    }
+  ]
+}

@@ -8,14 +8,19 @@
     "dev": "python3 -m http.server 8080",
     "serve": "npx serve ."
   },
-  "keywords": ["dashboard", "monitoring", "agents", "openclaw"],
+  "keywords": [
+    "dashboard",
+    "monitoring",
+    "agents",
+    "openclaw"
+  ],
   "author": "Shawn Estes",
   "license": "MIT",
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.18.2",
-    "cors": "^2.8.5"
+    "node-fetch": "^2.7.0"
   },
-  "devDependencies": {},
   "repository": {
     "type": "git",
     "url": "https://github.com/shawnestes/alfred.git"

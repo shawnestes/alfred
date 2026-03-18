@@ -1,0 +1,35 @@
+/* Shared nav styles */
+.nav-bar {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    border-bottom: 1px solid #333;
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    height: 50px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+.nav-bar .nav-brand {
+    color: #00ff88;
+    font-weight: 700;
+    font-size: 1.2rem;
+    margin-right: 2rem;
+    text-decoration: none;
+}
+.nav-bar a {
+    color: #888;
+    text-decoration: none;
+    padding: 0.8rem 1rem;
+    font-size: 0.9rem;
+    transition: color 0.2s;
+    border-bottom: 2px solid transparent;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+.nav-bar a:hover, .nav-bar a.active {
+    color: #00ff88;
+    border-bottom-color: #00ff88;
+}

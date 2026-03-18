@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alfred - Goals</title>
+    <link rel="stylesheet" href="nav.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f23; color: #ccc; }
+        .container { padding: 2rem; max-width: 1000px; margin: 0 auto; }
+        
+        .mission-section { 
+            background: linear-gradient(135deg, #1a1a2e, #16213e); 
+            border-radius: 16px; 
+            padding: 2rem; 
+            margin-bottom: 2rem; 
+            border: 1px solid #333; 
+            text-align: center;
+        }
+        .mission-section h1 { 
+            color: #00ff88; 
+            font-size: 1.1rem; 
+            margin-bottom: 0.5rem; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            font-weight: 600;
+        }
+        .mission-text { 
+            color: #fff; 
+            font-size: 1.4rem; 
+            font-weight: 300; 
+            line-height: 1.5; 
+        }
+        
+        .goals-grid { 
+            display: grid; 
+            gap: 1.5rem; 
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); 
+        }
+        
+        .goal-card { 
+            background: #1a1a2e; 
+            border-radius: 12px; 
+            padding: 1.5rem; 
+            border: 1px solid #333; 
+            position: relative;
+            transition: all 0.2s;
+        }
+        .goal-card:hover { 
+            border-color: #00ff88; 
+            transform: translateY(-2px); 
+            box-shadow: 0 4px 20px rgba(0,255,136,0.1);
+        }
+        
+        .goal-header { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            margin-bottom: 1rem; 
+        }
+        .goal-priority { 
+            background: #00ff88; 
+            color: #000; 
+            border-radius: 50%; 
+            width: 24px; 
+            height: 24px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 0.75rem; 
+            font-weight: 700; 
+        }
+        
+        .goal-title { 
+            color: #fff; 
+            font-size: 1.1rem; 
+            font-weight: 600; 
+            margin-bottom: 0.5rem; 
+            line-height: 1.3;
+        }
+        
+        .goal-meta { 
+            display: flex; 
+            gap: 0.5rem; 
+            margin-bottom: 1rem; 
+        }
+        .project-badge { 
+            background: rgba(0,255,136,0.1); 
+            color: #00ff88; 
+            padding: 0.2rem 0.6rem; 
+            border-radius: 12px; 
+            font-size: 0.75rem; 
+            font-weight: 500;
+        }
+        .project-badge.dearnote { background: rgba(108,92,231,0.1); color: #6c5ce7; }
+        .project-badge.noyoupick { background: rgba(0,184,148,0.1); color: #00b894; }
+        .project-badge.lifescript { background: rgba(116,185,255,0.1); color: #74b9ff; }
+        .project-badge.quickdraw { background: rgba(253,203,110,0.1); color: #fdcb6e; }
+        .project-badge.ghostreel { background: rgba(225,112,85,0.1); color: #e17055; }
+        
+        .status-badge { 
+            padding: 0.2rem 0.6rem; 
+            border-radius: 12px; 
+            font-size: 0.75rem; 
+            font-weight: 500;
+        }
+        .status-badge.in-progress { background: rgba(255,195,0,0.1); color: #ffc300; }
+        .status-badge.active { background: rgba(0,255,136,0.1); color: #00ff88; }
+        .status-badge.completed { background: rgba(116,185,255,0.1); color: #74b9ff; }
+        .status-badge.paused { background: rgba(255,107,107,0.1); color: #ff6b6b; }
+        
+        .tasks-section h4 { 
+            color: #ccc; 
+            font-size: 0.85rem; 
+            margin-bottom: 0.5rem; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px;
+        }
+        .task-list { 
+            list-style: none; 
+            margin-bottom: 1rem; 
+        }
+        .task-item { 
+            padding: 0.4rem 0; 
+            color: #aaa; 
+            font-size: 0.9rem; 
+            display: flex; 
+            align-items: center; 
+            gap: 0.5rem;
+        }
+        .task-item:before { 
+            content: '•'; 
+            color: #00ff88; 
+            font-weight: bold; 
+        }
+        
+        .progress-section { 
+            margin-top: 1rem; 
+            padding-top: 1rem; 
+            border-top: 1px solid #333; 
+        }
+        .progress-bar { 
+            background: #16213e; 
+            height: 6px; 
+            border-radius: 3px; 
+            overflow: hidden; 
+            margin-bottom: 0.5rem;
+        }
+        .progress-fill { 
+            height: 100%; 
+            background: linear-gradient(90deg, #00ff88, #00cc6a); 
+            transition: width 0.3s;
+        }
+        .progress-text { 
+            color: #666; 
+            font-size: 0.75rem; 
+        }
+        
+        .loading { 
+            text-align: center; 
+            padding: 2rem; 
+            color: #666; 
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav-bar">
+        <a href="/" class="nav-brand">Alfred</a>
+        <a href="/">Home</a>
+        <a href="/tasks.html">Tasks</a>
+        <a href="/goals.html" class="active">Goals</a>
+        <a href="/costs.html">Costs</a>
+        <a href="/pipeline.html">Pipeline</a>
+        <a href="/calendar.html">Calendar</a>
+        <a href="/memory.html">Memory</a>
+        <a href="/team.html">Team</a>
+        <a href="/office.html">Office</a>
+    </nav>
+    
+    <div class="container">
+        <div class="mission-section" id="mission">
+            <h1>Mission</h1>
+            <div class="mission-text">Loading...</div>
+        </div>
+        
+        <div class="goals-grid" id="goals-grid">
+            <div class="loading">Loading goals...</div>
+        </div>
+    </div>
+
+    <script>
+        async function loadGoals() {
+            try {
+                const response = await fetch('/api/goals');
+                const data = await response.json();
+                
+                // Update mission
+                const missionEl = document.querySelector('#mission .mission-text');
+                missionEl.textContent = data.mission;
+                
+                // Update goals
+                const goalsGrid = document.getElementById('goals-grid');
+                goalsGrid.innerHTML = data.goals.map(goal => {
+                    const completedTasks = goal.tasks.length; // For now, assume all tasks are pending
+                    const progressPercent = 0; // Could be calculated based on task completion
+                    
+                    return `
+                        <div class="goal-card">
+                            <div class="goal-header">
+                                <div class="goal-priority">${goal.priority}</div>
+                                <div class="status-badge ${goal.status}">${goal.status.replace('-', ' ')}</div>
+                            </div>
+                            
+                            <div class="goal-title">${goal.title}</div>
+                            
+                            <div class="goal-meta">
+                                <span class="project-badge ${goal.project.toLowerCase()}">${goal.project}</span>
+                            </div>
+                            
+                            <div class="tasks-section">
+                                <h4>Key Tasks</h4>
+                                <ul class="task-list">
+                                    ${goal.tasks.map(task => `<li class="task-item">${task}</li>`).join('')}
+                                </ul>
+                            </div>
+                            
+                            <div class="progress-section">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${progressPercent}%"></div>
+                                </div>
+                                <div class="progress-text">
+                                    ${goal.tasks.length} task${goal.tasks.length !== 1 ? 's' : ''} • Priority ${goal.priority}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('Error loading goals:', error);
+                document.getElementById('goals-grid').innerHTML = '<div class="loading">Error loading goals</div>';
+            }
+        }
+        
+        // Load goals on page load
+        loadGoals();
+    </script>
+</body>
+</html>

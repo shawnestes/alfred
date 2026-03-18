@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alfred - Memory Browser</title>
+    <link rel="stylesheet" href="nav.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f23; color: #ccc; }
+        .container { display: flex; height: calc(100vh - 50px); }
+        .sidebar { width: 320px; background: #1a1a2e; border-right: 1px solid #333; overflow-y: auto; flex-shrink: 0; }
+        .search { padding: 1rem; }
+        .search input { width: 100%; background: #0f0f23; border: 1px solid #333; color: #ccc; padding: 0.6rem; border-radius: 6px; font-size: 0.9rem; }
+        .search input:focus { outline: none; border-color: #00ff88; }
+        .file-list { list-style: none; }
+        .file-list li { padding: 0.8rem 1rem; border-bottom: 1px solid #222; cursor: pointer; transition: background 0.2s; }
+        .file-list li:hover, .file-list li.active { background: #16213e; }
+        .file-list .fname { color: #fff; font-size: 0.9rem; }
+        .file-list .fmeta { color: #555; font-size: 0.75rem; margin-top: 0.2rem; }
+        .content { flex: 1; padding: 2rem; overflow-y: auto; }
+        .content h1, .content h2, .content h3 { color: #00ff88; margin: 1rem 0 0.5rem; }
+        .content p { margin-bottom: 0.8rem; line-height: 1.7; }
+        .content code { background: #1a1a2e; padding: 0.2rem 0.4rem; border-radius: 3px; color: #00ff88; }
+        .content pre { background: #1a1a2e; padding: 1rem; border-radius: 8px; overflow-x: auto; margin: 1rem 0; }
+        .content ul, .content ol { margin-left: 1.5rem; margin-bottom: 0.8rem; }
+        .content a { color: #00ff88; }
+        .placeholder { color: #555; text-align: center; margin-top: 4rem; }
+        .search-results { padding: 0 1rem 1rem; }
+        .search-results .sr { background: #16213e; padding: 0.6rem; border-radius: 6px; margin-bottom: 0.5rem; cursor: pointer; }
+        .search-results .sr .sr-name { color: #00ff88; font-size: 0.85rem; }
+        .search-results .sr .sr-match { color: #888; font-size: 0.75rem; margin-top: 0.2rem; }
+    </style>
+</head>
+<body>
+    <nav class="nav-bar">
+        <a href="/" class="nav-brand">Alfred</a>
+        <a href="/">Home</a>
+        <a href="/tasks.html">Tasks</a>
+        <a href="/goals.html">Goals</a>
+        <a href="/costs.html">Costs</a>
+        <a href="/pipeline.html">Pipeline</a>
+        <a href="/calendar.html">Calendar</a>
+        <a href="/memory.html" class="active">Memory</a>
+        <a href="/team.html">Team</a>
+        <a href="/office.html">Office</a>
+    </nav>
+    <div class="container">
+        <div class="sidebar">
+            <div class="search"><input type="text" id="search" placeholder="Search memories..."></div>
+            <div class="search-results" id="search-results"></div>
+            <ul class="file-list" id="file-list"></ul>
+        </div>
+        <div class="content" id="content"><div class="placeholder">Select a memory file to view</div></div>
+    </div>
+    <script>
+        let files = [];
+        const fileList = document.getElementById('file-list');
+        const content = document.getElementById('content');
+        const searchInput = document.getElementById('search');
+        const searchResults = document.getElementById('search-results');
+
+        fetch('/api/memories').then(r=>r.json()).then(data => {
+            files = data;
+            renderList(files);
+        });
+
+        function renderList(list) {
+            fileList.innerHTML = list.map(f => {
+                const size = f.size > 1024 ? (f.size/1024).toFixed(1)+'KB' : f.size+'B';
+                const date = new Date(f.modified).toLocaleDateString();
+                return `<li onclick="loadFile('${f.filename}', this)"><div class="fname">${f.filename}</div><div class="fmeta">${size} · ${date}</div></li>`;
+            }).join('');
+        }
+
+        function loadFile(fn, el) {
+            document.querySelectorAll('.file-list li').forEach(l => l.classList.remove('active'));
+            if (el) el.classList.add('active');
+            fetch('/api/memory/' + encodeURIComponent(fn)).then(r=>r.text()).then(md => {
+                content.innerHTML = marked.parse(md);
+            });
+        }
+
+        let searchTimeout;
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            const q = searchInput.value.trim();
+            if (!q) { searchResults.innerHTML = ''; renderList(files); return; }
+            searchTimeout = setTimeout(() => {
+                fetch('/api/memory/search?q=' + encodeURIComponent(q)).then(r=>r.json()).then(results => {
+                    searchResults.innerHTML = results.map(r => 
+                        `<div class="sr" onclick="loadFile('${r.filename}')"><div class="sr-name">${r.filename}</div><div class="sr-match">${r.matches[0] || ''}</div></div>`
+                    ).join('');
+                });
+            }, 300);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alfred - Team</title>
+    <link rel="stylesheet" href="nav.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f23; color: #ccc; }
+        .org { display: flex; flex-direction: column; align-items: center; padding: 3rem 2rem; gap: 2rem; }
+        .tier { display: flex; gap: 1.5rem; flex-wrap: wrap; justify-content: center; }
+        .connector { width: 2px; height: 2rem; background: #333; }
+        .fan { display: flex; gap: 1.5rem; position: relative; }
+        .fan::before { content: ''; position: absolute; top: -1rem; left: 10%; right: 10%; height: 1px; background: #333; }
+        .card { background: linear-gradient(135deg, #1a1a2e, #16213e); border-radius: 12px; padding: 1.5rem; border: 1px solid #333; width: 240px; text-align: center; transition: transform 0.3s, box-shadow 0.3s; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.4); }
+        .card.ceo { border-color: #ffd700; }
+        .card.coo { border-color: #00ff88; }
+        .avatar { width: 60px; height: 60px; border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; }
+        .card.ceo .avatar { background: linear-gradient(135deg, #ffd700, #ff8c00); }
+        .card.coo .avatar { background: linear-gradient(135deg, #00ff88, #00aa55); }
+        .card .avatar { background: linear-gradient(135deg, #333, #555); }
+        .name { color: #fff; font-size: 1.1rem; font-weight: 600; }
+        .role { color: #888; font-size: 0.85rem; margin-top: 0.3rem; }
+        .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 0.3rem; }
+        .status-line { margin-top: 0.8rem; font-size: 0.8rem; }
+        .running { background: #00ff88; }
+        .stopped { background: #ff4444; }
+        .disabled { background: #ffaa00; }
+        .project { color: #555; font-size: 0.75rem; margin-top: 0.5rem; }
+    </style>
+</head>
+<body>
+    <nav class="nav-bar">
+        <a href="/" class="nav-brand">Alfred</a>
+        <a href="/">Home</a>
+        <a href="/tasks.html">Tasks</a>
+        <a href="/goals.html">Goals</a>
+        <a href="/costs.html">Costs</a>
+        <a href="/pipeline.html">Pipeline</a>
+        <a href="/calendar.html">Calendar</a>
+        <a href="/memory.html">Memory</a>
+        <a href="/team.html" class="active">Team</a>
+        <a href="/office.html">Office</a>
+    </nav>
+    <div class="org">
+        <div class="tier">
+            <div class="card ceo">
+                <div class="avatar">👨‍💼</div>
+                <div class="name">Shawn</div>
+                <div class="role">CEO · Human</div>
+                <div class="status-line"><span class="status-dot running"></span>Online</div>
+            </div>
+        </div>
+        <div class="connector"></div>
+        <div class="tier">
+            <div class="card coo" id="card-nexus">
+                <div class="avatar">🤖</div>
+                <div class="name">Nexus</div>
+                <div class="role">COO · Main Orchestrator</div>
+                <div class="status-line"><span class="status-dot" id="dot-nexus"></span><span id="status-nexus">Checking...</span></div>
+                <div class="project">Port 18789</div>
+            </div>
+        </div>
+        <div class="connector"></div>
+        <div class="tier fan" id="agents-row">
+            <div class="card" id="card-dearnote">
+                <div class="avatar">💌</div>
+                <div class="name">Dearnote</div>
+                <div class="role">Gratitude Messaging App</div>
+                <div class="status-line"><span class="status-dot" id="dot-dearnote"></span><span id="status-dearnote">Checking...</span></div>
+                <div class="project">Port 18800</div>
+            </div>
+            <div class="card" id="card-ghostreel">
+                <div class="avatar">🎬</div>
+                <div class="name">Ghostreel</div>
+                <div class="role">Content Automation</div>
+                <div class="status-line"><span class="status-dot" id="dot-ghostreel"></span><span id="status-ghostreel">Checking...</span></div>
+                <div class="project">Port 18820</div>
+            </div>
+            <div class="card" id="card-quickdraw">
+                <div class="avatar">⚡</div>
+                <div class="name">Quickdraw</div>
+                <div class="role">Solana DEX Trading Bot</div>
+                <div class="status-line"><span class="status-dot disabled" id="dot-quickdraw"></span><span id="status-quickdraw">Disabled</span></div>
+                <div class="project">Port 18830</div>
+            </div>
+        </div>
+    </div>
+    <script>
+        ['nexus','dearnote','ghostreel','quickdraw'].forEach(name => {
+            fetch('/api/agent/' + name + '/health').then(r=>r.json()).then(d => {
+                const dot = document.getElementById('dot-' + name);
+                const label = document.getElementById('status-' + name);
+                dot.className = 'status-dot ' + (d.status === 'running' ? 'running' : d.status === 'disabled' ? 'disabled' : 'stopped');
+                label.textContent = d.status.charAt(0).toUpperCase() + d.status.slice(1);
+            }).catch(() => {});
+        });
+    </script>
+</body>
+</html>

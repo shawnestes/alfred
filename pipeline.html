@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alfred - Content Pipeline</title>
+    <link rel="stylesheet" href="nav.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f23; color: #ccc; }
+        .board { display: flex; gap: 1rem; padding: 2rem; overflow-x: auto; min-height: calc(100vh - 50px); }
+        .column { flex: 1; min-width: 200px; background: #1a1a2e; border-radius: 12px; padding: 1rem; border: 1px solid #333; }
+        .column h2 { color: #fff; font-size: 0.9rem; margin-bottom: 1rem; text-align: center; padding-bottom: 0.5rem; border-bottom: 2px solid #333; }
+        .card { background: #16213e; border-radius: 8px; padding: 0.8rem; margin-bottom: 0.6rem; border-left: 3px solid #00ff88; }
+        .card .name { color: #fff; font-size: 0.85rem; word-break: break-all; }
+        .card .time { color: #666; font-size: 0.75rem; margin-top: 0.3rem; }
+        .card .files { color: #555; font-size: 0.7rem; margin-top: 0.3rem; }
+    </style>
+</head>
+<body>
+    <nav class="nav-bar">
+        <a href="/" class="nav-brand">Alfred</a>
+        <a href="/">Home</a>
+        <a href="/tasks.html">Tasks</a>
+        <a href="/goals.html">Goals</a>
+        <a href="/costs.html">Costs</a>
+        <a href="/pipeline.html" class="active">Pipeline</a>
+        <a href="/calendar.html">Calendar</a>
+        <a href="/memory.html">Memory</a>
+        <a href="/team.html">Team</a>
+        <a href="/office.html">Office</a>
+    </nav>
+    <div class="board" id="board"></div>
+    <script>
+        const stages = ['Idea','Script','Voiceover','Assembly','Upload','Published'];
+        const board = document.getElementById('board');
+        stages.forEach(s => {
+            board.innerHTML += `<div class="column" id="stage-${s}"><h2>${s}</h2></div>`;
+        });
+        fetch('/api/pipeline').then(r=>r.json()).then(items => {
+            items.forEach(item => {
+                const col = document.getElementById('stage-' + item.stage);
+                if (!col) return;
+                const d = new Date(item.timestamp).toLocaleDateString();
+                col.innerHTML += `<div class="card"><div class="name">${item.name}</div><div class="time">${d}</div><div class="files">${item.files.join(', ')}</div></div>`;
+            });
+        });
+    </script>
+</body>
+</html>
