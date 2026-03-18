@@ -1,12 +1,11 @@
 #!/bin/bash
-# Quickdraw Daily Trade Report — pure code, no LLM
-# Reads .paper-portfolio.json, formats report, posts to #quickdraw
-# Meant to run as a cron job (e.g., daily 10pm ET)
+# Quickdraw Hourly Trade Report — pure code, no LLM
+# Reads .paper-portfolio.json, formats report with per-strategy breakdown, posts to #quickdraw
+# Runs hourly to catch problems early
 
 set -euo pipefail
 
 PORTFOLIO="/root/.openclaw/agents/quickdraw/workspace/repo/.paper-portfolio.json"
-LIVE_LOG="/var/log/quickdraw-live.log"
 SLACK_TOKEN="${SLACK_TOKEN:-}"
 CHANNEL="C0ACL9Q55EX"
 
@@ -15,10 +14,10 @@ if [ ! -f "$PORTFOLIO" ]; then
   exit 1
 fi
 
-# Generate report via Python (structured data → formatted output)
 REPORT=$(python3 << 'PYEOF'
 import json, sys
 from datetime import datetime, timedelta, timezone
+from collections import defaultdict
 
 with open("/root/.openclaw/agents/quickdraw/workspace/repo/.paper-portfolio.json") as f:
     data = json.load(f)
@@ -30,77 +29,112 @@ pnl_pct = (pnl_sol / starting_sol) * 100
 positions = data.get("positions", {})
 trades = data.get("trades", [])
 
-# Today's trades (last 24h)
 now = datetime.now(timezone.utc)
-cutoff = now - timedelta(hours=24)
-today_trades = []
-for t in trades:
+cutoff_1h = now - timedelta(hours=1)
+cutoff_24h = now - timedelta(hours=24)
+
+def parse_ts(t):
     try:
-        ts = datetime.fromisoformat(t["timestamp"].replace("Z", "+00:00"))
-        if ts >= cutoff:
-            today_trades.append(t)
+        return datetime.fromisoformat(t["timestamp"].replace("Z", "+00:00"))
     except:
-        pass
+        return None
 
-# Count buys/sells
-buys = [t for t in today_trades if t["type"] == "BUY"]
-sells = [t for t in today_trades if t["type"] == "SELL"]
+# Partition trades
+trades_1h = []
+trades_24h = []
+for t in trades:
+    ts = parse_ts(t)
+    if ts and ts >= cutoff_1h:
+        trades_1h.append(t)
+    if ts and ts >= cutoff_24h:
+        trades_24h.append(t)
 
-# Calculate today's realized P&L from sells
-today_pnl = 0
-for s in sells:
-    # Rough P&L: output SOL - input cost basis
-    today_pnl += s.get("outputAmount", 0) - s.get("inputAmount", 0) if s.get("outputSymbol") == "SOL" else 0
+def strategy_breakdown(trade_list):
+    """Returns per-strategy stats."""
+    by_strat = defaultdict(lambda: {"buys": 0, "sells": 0, "sol_in": 0.0, "sol_out": 0.0})
+    for t in trade_list:
+        strat = t.get("strategy", "unknown")
+        if strat in ("unknown", "debug-test"):
+            strat = "unknown"
+        s = by_strat[strat]
+        if t["type"] == "BUY":
+            s["buys"] += 1
+            if t.get("inputSymbol") == "SOL":
+                s["sol_in"] += t.get("inputAmount", 0)
+        else:
+            s["sells"] += 1
+            if t.get("outputSymbol") == "SOL":
+                s["sol_out"] += t.get("outputAmount", 0)
+    return dict(by_strat)
 
-# Strategy breakdown from live log
-import subprocess
-try:
-    result = subprocess.run(
-        ["grep", "Strategy Performance", "-A", "10", "/var/log/quickdraw-live.log"],
-        capture_output=True, text=True, timeout=5
-    )
-    log_lines = result.stdout.strip().split("\n")
-    # Get the last performance block
-    strat_lines = []
-    for i, line in enumerate(log_lines):
-        if "Strategy Performance" in line:
-            strat_lines = log_lines[i+1:i+10]
-    strategy_block = "\n".join(l for l in strat_lines if any(s in l for s in ["rsi", "momentum", "mean-reversion", "mfi", "TOTAL"]))
-except:
-    strategy_block = "unavailable"
+def format_strat_table(breakdown):
+    if not breakdown:
+        return "  _No trades_"
+    lines = []
+    total_buys = total_sells = 0
+    total_in = total_out = 0.0
+    for strat, s in sorted(breakdown.items()):
+        total = s["buys"] + s["sells"]
+        net = s["sol_out"] - s["sol_in"]
+        sign = "+" if net >= 0 else ""
+        lines.append(f"  • *{strat}*: {total} trades ({s['buys']}B/{s['sells']}S) | net: {sign}{net:.4f} SOL")
+        total_buys += s["buys"]
+        total_sells += s["sells"]
+        total_in += s["sol_in"]
+        total_out += s["sol_out"]
+    total_net = total_out - total_in
+    sign = "+" if total_net >= 0 else ""
+    lines.append(f"  ——")
+    lines.append(f"  *Total*: {total_buys + total_sells} trades ({total_buys}B/{total_sells}S) | net: {sign}{total_net:.4f} SOL")
+    return "\n".join(lines)
 
-# Format positions
+strat_1h = strategy_breakdown(trades_1h)
+strat_24h = strategy_breakdown(trades_24h)
+
+# Positions
 pos_lines = []
 for mint, p in positions.items():
     sym = p["symbol"]
     amt = p["amount"]
     cost = p["totalCostSol"]
     pos_lines.append(f"  • {sym}: {amt:,.2f} tokens (cost: {cost:.3f} SOL)")
-
 if not pos_lines:
     pos_lines = ["  • No open positions"]
 
-# Build report
-arrow = "📈" if pnl_sol >= 0 else "📉"
-report = f""":bar_chart: *Quickdraw Daily Trade Report*
-_{now.strftime('%B %d, %Y')}_
+# Alerts
+alerts = []
+if not trades_1h:
+    alerts.append(":warning: No trades in the last hour — strategy may be idle")
+for strat, s in strat_1h.items():
+    net = s["sol_out"] - s["sol_in"]
+    if net < -0.5:
+        alerts.append(f":rotating_light: *{strat}* lost {abs(net):.4f} SOL in the last hour")
+
+alert_block = "\n".join(alerts) if alerts else ""
+
+arrow = ":chart_with_upwards_trend:" if pnl_sol >= 0 else ":chart_with_downwards_trend:"
+et_now = now - timedelta(hours=4)  # rough ET offset
+
+report = f""":bar_chart: *Quickdraw Trade Report*
+_{et_now.strftime('%B %d, %Y — %I:%M %p')} ET_
 
 *Portfolio*
-  • Balance: {sol_balance:.2f} SOL ({pnl_pct:+.2f}% all-time)
-  • Starting: {starting_sol:.2f} SOL
-  • P&L: {pnl_sol:+.4f} SOL {arrow}
+  • Balance: {sol_balance:.2f} SOL ({pnl_pct:+.2f}% all-time) {arrow}
+  • Starting: {starting_sol:.2f} SOL | P&L: {pnl_sol:+.4f} SOL
 
-*Today's Activity* (24h)
-  • Trades: {len(today_trades)} ({len(buys)} buys, {len(sells)} sells)
-  • Total trades all-time: {len(trades):,}
+*Last Hour*
+{format_strat_table(strat_1h)}
 
-*Open Positions*
-{chr(10).join(pos_lines)}
+*Last 24 Hours*
+{format_strat_table(strat_24h)}
 
-*Strategy Performance* (current session)
-```{strategy_block}```
+*Open Positions* ({len(positions)})
+{chr(10).join(pos_lines)}"""
 
-_Automated report — no tokens burned_ :robot_face:"""
+if alert_block:
+    report += f"\n\n{alert_block}"
+
+report += "\n\n_Hourly automated report_ :robot_face:"
 
 print(report)
 PYEOF
@@ -112,13 +146,14 @@ if [ -z "$REPORT" ]; then
 fi
 
 # Post to Slack
-curl -s -X POST "https://slack.com/api/chat.postMessage" \
-  -H "Authorization: Bearer $SLACK_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d "$(python3 -c "import json; print(json.dumps({'channel': '$CHANNEL', 'text': '''$REPORT'''}))" 2>/dev/null || python3 -c "
-import json, sys
-report = sys.stdin.read()
-print(json.dumps({'channel': '$CHANNEL', 'text': report}))
-" <<< "$REPORT")" > /dev/null
+python3 -c "
+import json, urllib.request
+data = json.dumps({'channel': '$CHANNEL', 'text': '''$(echo "$REPORT" | sed "s/'/\\\\'/g")'''}).encode()
+req = urllib.request.Request('https://slack.com/api/chat.postMessage', data=data, headers={
+    'Authorization': 'Bearer $SLACK_TOKEN',
+    'Content-Type': 'application/json'
+})
+resp = urllib.request.urlopen(req)
+" 2>/dev/null
 
 echo "Report posted to #quickdraw"
